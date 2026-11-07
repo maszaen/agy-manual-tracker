@@ -381,65 +381,35 @@
     b.disabled = !S.accounts.length;
   }
 
-  /* Satu kategori = satu baris.
-     Kalau kategorinya punya lebih dari satu limit (mis. Weekly + Five Hour),
-     semuanya digambar sebagai cincin konsentris di dalam satu donut: satu
-     cincin per limit, urut dari luar ke dalam. Kalau limitnya cuma satu, tidak
-     ada yang digabung — donut satu cincin, keterangannya ditaruh di ujung baris.
-     Tidak ada angka persen di sini: panjang busur sudah menyatakan sisanya,
-     sisanya diwakili kata (Aman / Waspada / Kritis) + waktu reset. */
-  function donutHTML(items) {
-    var radii = [17, 11.5, 6], out = '<svg viewBox="0 0 42 42" aria-hidden="true">';
-    for (var k = 0; k < items.length && k < radii.length; k++) {
-      var p = eff(items[k].l), r = radii[k], c = 2 * Math.PI * r;
-      out += '<circle class="dt" cx="21" cy="21" r="' + r + '"/>';
-      if (p > 0) out += '<circle class="dv lv-' + lvl(p) + '" cx="21" cy="21" r="' + r +
-        '" stroke-dasharray="' + (c * p / 100).toFixed(2) + ' ' + c.toFixed(2) + '"/>';
-    }
-    return out + '</svg>';
+  /* Satu limit = satu baris gaya "kredit":
+       <nama kategori> <periode>            <kapan reset>
+       ▮▮▮▮▮▮▮▮▮▮░░░░░░░░░░░░░░░░░░░░░░░
+       Sisa 34%                    1 hari 19 jam lagi
+     Tidak ada kata status (Aman/Waspada/Kritis): panjang isi meter yang
+     menyatakan kondisinya, jadi tidak perlu diterjemahkan ke kata. */
+  function catLabel(l) {
+    var t = shortLabel(l.label), sec = l.section || '';
+    if (!sec) return t;
+    var re = new RegExp('^' + sec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*', 'i');
+    var period = t.replace(re, '').trim();
+    if (!period) return t;
+    return sec + ' ' + period;
   }
 
-  function stateWord(p) { return p >= 50 ? 'Aman' : p >= 10 ? 'Waspada' : 'Kritis'; }
-
-  function resetWords(l) {
-    if (l.resetAt && l.resetAt > Date.now()) return 'reset dalam ' + dur(l.resetAt - Date.now());
-    if (l.resetAt) return 'reset sudah lewat';
-    return l.pct < 100 ? 'reset belum diisi' : 'penuh';
-  }
-
-  function catRow(a, sec, items) {
-    for (var k = 0; k < items.length; k++) {
-      if (ui.edit && ui.edit.id === a.id && ui.edit.i === items[k].i) return limitForm(a, items[k].l, items[k].i);
-    }
-    var kebab = function (idx) {
-      return '<button class="icon-btn sm" type="button" data-act="menu-lim" data-i="' + idx +
-        '" aria-haspopup="menu" aria-label="Aksi limit" title="Aksi limit">' + ic('more') + '</button>';
-    };
-    var strip = function (l) {
-      var t = shortLabel(l.label);
-      if (sec && sec !== 'Umum') {
-        var re = new RegExp('^' + sec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*', 'i');
-        t = t.replace(re, '') || t;
-      }
-      return t;
-    };
-    var h = '<li class="cat"><span class="cat-donut">' + donutHTML(items) + '</span><div class="cat-main">';
-    if (items.length === 1) {
-      var l = items[0].l, p = eff(l), titled = sec && sec !== 'Umum';
-      h += '<div class="cat-line"><span class="cat-name">' + esc(titled ? sec : shortLabel(l.label)) + '</span>' +
-        '<span class="cat-w"><span class="st lv-' + lvl(p) + '">' + stateWord(p) + '</span> · ' +
-        (titled ? esc(strip(l)) + ' · ' : '') + esc(resetWords(l)) + '</span>' + kebab(items[0].i) + '</div>';
-    } else {
-      h += '<div class="cat-head"><span class="cat-name">' + esc(sec || 'Umum') + '</span></div>';
-      items.forEach(function (it) {
-        var q = eff(it.l);
-        h += '<div class="cat-line"><span class="cat-key lv-' + lvl(q) + '"></span>' +
-          '<span class="cat-t">' + esc(strip(it.l)) + '</span>' +
-          '<span class="cat-w"><span class="st lv-' + lvl(q) + '">' + stateWord(q) + '</span> · ' + esc(resetWords(it.l)) + '</span>' +
-          kebab(it.i) + '</div>';
-      });
-    }
-    return h + '</div></li>';
+  function creditRow(a, l, i) {
+    if (ui.edit && ui.edit.id === a.id && ui.edit.i === i) return limitForm(a, l, i);
+    var p = eff(l), meta = '', right = '';
+    if (l.resetAt && l.resetAt > Date.now()) { meta = 'Reset ' + when(l.resetAt); right = dur(l.resetAt - Date.now()) + ' lagi'; }
+    else if (l.resetAt) { meta = 'Reset ' + when(l.resetAt); right = 'sudah lewat'; }
+    else if (l.pct < 100) { meta = 'Reset belum diisi'; }
+    return '<li class="cr" style="--p:' + (Math.round(p * 10) / 10) + '">' +
+      '<div class="cr-top"><span class="cr-name">' + esc(catLabel(l)) + '</span>' +
+      (meta ? '<span class="cr-meta">' + esc(meta) + '</span>' : '') +
+      '<button class="icon-btn sm" type="button" data-act="menu-lim" data-i="' + i +
+      '" aria-haspopup="menu" aria-label="Aksi limit" title="Aksi limit">' + ic('more') + '</button></div>' +
+      '<div class="meter"><i></i></div>' +
+      '<div class="cr-foot"><span>Sisa <b>' + Math.round(p) + '%</b></span>' +
+      (right ? '<span>' + esc(right) + '</span>' : '') + '</div></li>';
   }
 
   function limitForm(a, l, i) {
@@ -475,25 +445,21 @@
         '<button class="btn sm" type="button" data-act="paste-toggle">Tutup</button><button class="btn sm primary" type="button" data-act="paste-run">Proses</button></div></div>';
     }
 
-    var groups = [], gi = {}, newForm = ui.edit && ui.edit.id === a.id && ui.edit.i === 'new';
-    a.limits.forEach(function (l, i) {
-      if (gi[l.section] == null) { gi[l.section] = groups.length; groups.push({ n: l.section, r: [] }); }
-      groups[gi[l.section]].r.push({ l: l, i: i });
-    });
+    var newForm = ui.edit && ui.edit.id === a.id && ui.edit.i === 'new', rows = [];
+    a.limits.forEach(function (l, i) { rows.push(creditRow(a, l, i)); });
     if (newForm) h += '<div class="sect">Limit baru</div><ul class="limits">' + limitForm(a, null, 'new') + '</ul>';
     if (!a.limits.length && !newForm) {
       h += '<div class="empty-acc">Belum ada limit. Tempel teks atau tambah manual.</div>';
     }
-    groups.forEach(function (g) { h += '<ul class="limits">' + catRow(a, g.n, g.r) + '</ul>'; });
+    if (rows.length) h += '<ul class="limits">' + rows.join('') + '</ul>';
     return h;
   }
 
   function cardHTML(a, idx) {
     var av = avg(a), lv = lvl(av), c = 2 * Math.PI * 17;
     var chips = a.limits.map(function (l) {
-      var p = eff(l);
-      return '<span class="chip lv-' + lvl(p) + '">' + esc(shortLabel(l.label)) + '</span>';
-    }).join('');
+      return '<span class="chip" style="--p:' + (Math.round(eff(l) * 10) / 10) + '">' + esc(catLabel(l)) + '</span>';
+    }).join('<span class="tok-sep" aria-hidden="true">|</span>');
     var enter = ui.fresh || ui.newIds[a.id];
     return '<li class="card' + (a.open ? ' open' : '') + (S.sel === a.id ? ' sel' : '') + (enter ? ' enter' : '') + '" data-id="' + a.id + '" style="--i:' + idx + ';--h:' + hue(a.email) + '">' +
       '<button class="head-btn" type="button" data-act="toggle" aria-expanded="' + !!a.open + '">' +

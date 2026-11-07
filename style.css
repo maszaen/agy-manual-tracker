@@ -46,16 +46,16 @@
   --track: #262B34;     /* rel progress bar: lebih sepi dari border */
   /* Aksen: versi terang untuk teks/ring, versi solid untuk isi tombol
      (biru terang + teks putih gagal kontras, jadi dipisah). */
-  --ac: #7AA2FF;        /* 7.1:1 di surface */
-  --ac-solid: #3366E6;  /* putih di atasnya 5.0:1 */
-  --ac-solid-hover: #2A58CF;
+  --ac: #FF9E4A;        /* 8.6:1 di surface */
+  --ac-solid: #C2410C;  /* putih di atasnya 5.2:1 */
+  --ac-solid-hover: #A8360A;
   --on-ac: #FFFFFF;
-  --ac-bg: rgba(122, 162, 255, .12);
+  --ac-bg: rgba(255, 158, 74, .12);
   --sel: var(--ac);     /* fokus & akun terpilih = biru interaksi */
   /* Status dibuat lebih terang & sedikit di-desaturasi di mode gelap:
      warna "500" penuh terasa bergetar di atas latar gelap. */
   --ok: #3CCB8A;
-  --warn: #F0B44C;
+  --warn: #E4C64A;
   --bad: #F47A70;
   --bad-bg: rgba(244, 122, 112, .14);
   /* Avatar: saturasi rendah supaya warna identitas tidak disangka status.
@@ -70,7 +70,7 @@
   /* Toast terbalik (terang di atas gelap) agar menonjol sebagai notifikasi sementara. */
   --toast-bg: #E5E8ED;
   --toast-tx: #0E1015;
-  --toast-ac: #2453C9;
+  --toast-ac: #E2701E;
   --brand: var(--ac);
 }
 :root[data-theme="light"] {
@@ -89,17 +89,17 @@
   --bd2: #E9ECF0;
   --bd-strong: #B9C0CB;
   --track: #E4E7EC;
-  --ac: #2558D9;        /* 6.0:1 di putih, dipakai juga sebagai isi tombol */
-  --ac-solid: #2558D9;
-  --ac-solid-hover: #1E48B8;
+  --ac: #B4490A;        /* 5.4:1 di putih, dipakai juga sebagai isi tombol */
+  --ac-solid: #C44F14;
+  --ac-solid-hover: #A8410E;
   --on-ac: #FFFFFF;
-  --ac-bg: rgba(37, 88, 217, .08);
+  --ac-bg: rgba(196, 79, 20, .10);
   --sel: var(--ac);
   /* Status level "700": hijau/kuning cerah gagal kontras di putih
      (mis. #FBBF24 = 1.7:1), jadi digeser lebih gelap.
      Kuning digeser ke oranye-tanah agar tetap terbaca sebagai "waspada". */
   --ok: #067A4B;        /* 5.4:1 */
-  --warn: #B04A06;      /* 5.5:1 */
+  --warn: #8A6100;      /* 5.6:1 */
   --bad: #CC2B22;       /* 5.3:1 */
   --bad-bg: rgba(204, 43, 34, .08);
   --av-s: 35%;
@@ -110,7 +110,7 @@
   --scrim: rgba(15, 23, 41, .4);
   --toast-bg: #1A2130;
   --toast-tx: #F4F5F7;
-  --toast-ac: #8CB1FF;
+  --toast-ac: #FFB07A;
   --brand: var(--ac);
 }
 .lv-ok { --c: var(--ok); }
@@ -362,10 +362,10 @@ main { padding-bottom: 56px; }
 /* Satu-satunya pembawa warna di kartu, dan hanya saat perlu ditengok:
    aman = netral, waspada = kuning, kritis = merah. */
 .card .score.lv-ok { --c: var(--mut); }
-.score { position: relative; width: 44px; height: 44px; flex: none; color: var(--c); }
+.score { position: relative; width: 44px; height: 44px; flex: none; color: var(--tx); }
 .score svg { width: 44px; height: 44px; transform: rotate(-90deg); }
 .score .trk { stroke: var(--track); stroke-width: 4.4; }
-.score .val { stroke: var(--c); stroke-width: 4.4; transition: stroke-dasharray .7s cubic-bezier(.2, .8, .2, 1); }
+.score .val { stroke: var(--ac); stroke-width: 4.4; transition: stroke-dasharray .7s cubic-bezier(.2, .8, .2, 1); }
 .score b {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
@@ -393,17 +393,31 @@ main { padding-bottom: 56px; }
    Titiknya dibuang karena warnanya sama dengan angka di sebelahnya (tidak
    menambah info) dan angkanya sudah terbaca tanpa bantuan warna. */
 .chips { display: flex; flex-wrap: wrap; align-items: baseline; padding: 3px 14px 12px 64px; }
+/* Token di kartu tertutup: teksnya sendiri jadi indikator. Bagian "sisa"
+   diwarnai oranye sepanjang persentasenya, sisanya abu — potongannya ikut
+   bentuk huruf (background-clip: text), bukan bar di belakang teks.
+   --p diisi persen sisa per limit dari app.js. */
 .chip {
-  display: inline-flex; align-items: baseline; gap: 5px;
-  padding: 0 12px; background: none; border: 0;
-  font-size: var(--fs-1); color: var(--mut);
-  white-space: nowrap;
+  display: inline-block;
+  font-size: var(--fs-1); font-weight: 600; white-space: nowrap;
+  background-image: linear-gradient(90deg,
+    var(--ac) 0 calc(var(--p, 100) * 1%),
+    var(--mut) calc(var(--p, 100) * 1%) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
 }
-.chips > .chip:first-child { padding-left: 0; }
-.chip + .chip { border-left: 1px solid var(--bd); }
-.chip i { display: none; }
-.chip.lv-warn { color: var(--warn); }
-.chip.lv-bad { color: var(--bad); }
+.tok-sep { color: var(--bd); padding: 0 10px; font-size: var(--fs-1); user-select: none; }
+@media (max-width: 560px) {
+  /* di layar sempit token membungkus; garis "|" yang jatuh di ujung baris
+     kelihatan seperti karakter nyasar, jadi jarak saja yang memisahkan */
+  .chips { gap: 3px 14px; }
+  .tok-sep { display: none; }
+  /* judul limit + tanggal reset tidak muat sebaris: tanggal turun ke bawah
+     nama, jangan sampai judulnya yang dipotong */
+  .cr-top { flex-wrap: wrap; row-gap: 2px; }
+  .cr-name { flex: 1 1 auto; }
+  .cr-meta { order: 3; width: 100%; margin-left: 0; }
+}
 
 /* Body */
 .body { padding: 4px 14px 16px; border-top: 1px solid var(--bd2); }
@@ -427,33 +441,21 @@ main { padding-bottom: 56px; }
 
 .sect { margin: 14px 0 6px; font-size: var(--fs-1); font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--mut); }
 .limits { list-style: none; margin: 0; padding: 0; border: 1px solid var(--bd2); border-radius: 12px; overflow: hidden; background: var(--bg); }
-/* Satu kategori = satu baris + satu donut. Cincin di dalam donut: satu per
-   limit, urut luar -> dalam. Warna cuma dipakai kalau perlu ditengok
-   (Aman = netral). Tidak ada persen: busur + kata yang menyatakan sisanya. */
-.cat { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-top: 1px solid var(--bd2); }
-.limits > .cat:first-child { border-top: 0; }
-.cat-donut { width: 46px; height: 46px; flex: none; }
-.cat-donut svg { width: 46px; height: 46px; display: block; transform: rotate(-90deg); }
-.cat-donut .dt { fill: none; stroke: var(--track); stroke-width: 4.4; }
-.cat-donut .dv { fill: none; stroke-width: 4.4; stroke-linecap: round; transition: stroke-dasharray .6s cubic-bezier(.2,.8,.2,1); }
-.cat-donut .dv.lv-ok { stroke: var(--bd-strong); }
-.cat-donut .dv.lv-warn { stroke: var(--warn); }
-.cat-donut .dv.lv-bad { stroke: var(--bad); }
-.cat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.cat-head, .cat-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.cat-name { font-size: var(--fs-3); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cat-line { font-size: var(--fs-2); color: var(--mut); }
-.cat-line .cat-name { font-size: var(--fs-3); }
-.cat-t { font-weight: 600; color: var(--tx); flex: none; }
-.cat-key { width: 12px; height: 3px; border-radius: 2px; flex: none; background: var(--bd-strong); }
-.cat-key.lv-warn { background: var(--warn); }
-.cat-key.lv-bad { background: var(--bad); }
-.cat-w { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.cat-line .icon-btn.sm { width: 26px; height: 26px; margin-left: auto; flex: none; }
-.st { font-weight: 600; }
-.st.lv-ok { color: var(--mut); }
-.st.lv-warn { color: var(--warn); }
-.st.lv-bad { color: var(--bad); }
+/* Baris limit di kartu terbuka: nama + kapan reset, meter bersegmen,
+   lalu angka sisa + hitung mundur. Meter: deret potongan 4px (bukan bar
+   kontinu), panjang isi = persen sisa. */
+.cr { padding: 12px; border-top: 1px solid var(--bd2); }
+.limits > .cr:first-child { border-top: 0; }
+.cr-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cr-name { font-size: var(--fs-3); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr-meta { margin-left: auto; font-size: var(--fs-2); color: var(--mut); white-space: nowrap; flex: none; }
+.cr-top .icon-btn.sm { width: 26px; height: 26px; flex: none; }
+.meter { position: relative; height: 11px; margin: 9px 0 7px; }
+.meter::before, .meter i { content: ""; position: absolute; top: 0; bottom: 0; }
+.meter::before { left: 0; right: 0; background: repeating-linear-gradient(90deg, var(--track) 0 4px, transparent 4px 7px); }
+.meter i { left: 0; width: calc(var(--p) * 1%); background: repeating-linear-gradient(90deg, var(--ac) 0 4px, transparent 4px 7px); }
+.cr-foot { display: flex; justify-content: space-between; gap: 10px; font-size: var(--fs-2); color: var(--mut); }
+.cr-foot b { color: var(--tx); font-weight: 700; font-variant-numeric: tabular-nums; }
 .limit { padding: 11px 12px; border-top: 1px solid var(--bd2); }
 .limit:first-child { border-top: 0; }
 .limit-top { display: flex; align-items: center; gap: 8px; }
