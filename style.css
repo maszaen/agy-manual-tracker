@@ -284,7 +284,6 @@ main { padding-bottom: 56px; }
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .card {
   position: relative;
-  --rail: var(--mut); --rail-o: .45;
   background: var(--surface);
   border: 1px solid var(--bd);
   border-radius: 16px;
@@ -292,25 +291,9 @@ main { padding-bottom: 56px; }
   box-shadow: var(--shadow-sm);
   transition: border-color .2s, background .2s, box-shadow .2s;
 }
-/* Rail status: satu sapuan mata cukup untuk tahu mana yang menipis.
-   Warnanya ikut level kartu (data), bukan dekorasi. */
-.card::before {
-  content: "";
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--rail);
-  opacity: var(--rail-o);
-  pointer-events: none;
-  transition: opacity .2s, background .2s;
-}
-.card:where(:has(.score.lv-ok)) { --rail: var(--ok); --rail-o: .5; }
-.card:where(:has(.score.lv-warn)) { --rail: var(--warn); --rail-o: .9; }
-.card:where(:has(.score.lv-bad)) { --rail: var(--bad); --rail-o: 1; }
-.card:where(:has(.score.lv-none)) { --rail: var(--mut); --rail-o: .25; }
-.card:hover { --rail-o: 1; }
 .card.enter { animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
 .card:hover { border-color: var(--bd-strong); }
-.card.sel { border-color: var(--sel); box-shadow: 0 0 0 3px var(--ac-bg); --rail: var(--sel); --rail-o: 1; }
+.card.sel { border-color: var(--sel); box-shadow: 0 0 0 3px var(--ac-bg); }
 
 .head-btn {
   width: 100%;
@@ -335,11 +318,11 @@ main { padding-bottom: 56px; }
 .avatar {
   width: 38px; height: 38px; flex: none; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 15px; color: #fff;
-  background: hsl(var(--h) var(--av-s) var(--av-l));
+  font-weight: 600; font-size: 15px; color: var(--tx);
+  background: var(--hover);
   text-transform: uppercase;
   letter-spacing: .01em;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09);
+  box-shadow: inset 0 0 0 1px var(--bd);
 }
 .who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .name { font-weight: 600; font-size: 14.5px; letter-spacing: -.012em; display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -352,6 +335,9 @@ main { padding-bottom: 56px; }
 .card.sel .target { opacity: 1; color: var(--ac); }
 .meta { margin-top: 1px; font-size: 12px; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
+/* Satu-satunya pembawa warna di kartu, dan hanya saat perlu ditengok:
+   aman = netral, waspada = kuning, kritis = merah. */
+.card .score.lv-ok { --c: var(--mut); }
 .score { position: relative; width: 44px; height: 44px; flex: none; color: var(--c); }
 .score svg { width: 44px; height: 44px; transform: rotate(-90deg); }
 .score .trk { stroke: var(--track); stroke-width: 4.4; }
@@ -381,8 +367,11 @@ main { padding-bottom: 56px; }
   font-size: 11px; color: var(--mut);
   white-space: nowrap;
 }
-.chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
-.chip b { color: var(--c); font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.chip i { display: none; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+.chip b { color: var(--tx); font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.chip.lv-warn i, .chip.lv-bad i { display: block; }
+.chip.lv-warn b { color: var(--warn); }
+.chip.lv-bad b { color: var(--bad); }
 
 /* Body */
 .body { padding: 4px 14px 16px; border-top: 1px solid var(--bd2); }
@@ -417,6 +406,8 @@ main { padding-bottom: 56px; }
 .limit-acts { display: flex; opacity: .55; transition: opacity .15s; }
 .limit:hover .limit-acts, .limit:focus-within .limit-acts { opacity: 1; }
 @media (hover: none) { .limit-acts { opacity: 1; } }
+.limit.lv-ok { --c: var(--bd-strong); }
+.limit.lv-ok .limit-pct { color: var(--tx); }
 .bar { height: 6px; margin-top: 9px; background: var(--track); border-radius: 99px; overflow: hidden; }
 .bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--c); transition: width .8s cubic-bezier(.2, .8, .2, 1); }
 .open .bar i { width: var(--w); }
