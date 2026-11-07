@@ -319,7 +319,15 @@ main { padding-bottom: 56px; }
   background: none; border: 0; text-align: left;
   transition: background .15s;
 }
-.head-btn:hover { background: var(--surface2); }
+.head-btn:hover { background: var(--hover); }
+/* Kartu yang tertutup: seluruh permukaan jadi area hover + klik,
+   bukan hanya baris judulnya. Baris chip sebelumnya mati total. */
+.card:not(.open) .head-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.card:not(.open):hover { background: var(--hover); }
 .head-btn:focus-visible { outline-offset: -2px; border-radius: 16px; }
 .chev { color: var(--mut); transition: transform .3s cubic-bezier(.2, .8, .2, 1); display: inline-flex; }
 .chev .ic { width: 16px; height: 16px; }
