@@ -9,7 +9,7 @@
       IDB_KEY = 'dbFile';
 
   var S = { accounts: [], sort: 'avg', sel: null, all: false };
-  var ui = { q: '', paste: null, rename: null, edit: null, fresh: true, newIds: {}, undo: null };
+  var ui = { q: '', paste: null, pasteText: '', rename: null, edit: null, fresh: true, newIds: {}, undo: null, lastSaved: null };
   var fHandle = null, fReady = false;
 
   var $ = function (id) { return document.getElementById(id); };
@@ -80,7 +80,7 @@
   }
   function when(t) {
     var d = new Date(t);
-    return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }) + ', ' + pad(d.getHours()) + '.' + pad(d.getMinutes());
+    return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + pad(d.getHours()) + '.' + pad(d.getMinutes());
   }
   function ago(t) {
     if (!t) return 'belum ada data';
@@ -110,14 +110,22 @@
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+    ui.lastSaved = Date.now();
+    updateSaved();
     if (fHandle && fReady) writeDisk();
+  }
+  function updateSaved() {
+    var el = $('footSaved');
+    if (!el) return;
+    el.textContent = ui.lastSaved ? 'Tersimpan ' + ago(ui.lastSaved) : '';
+    el.title = 'Data disimpan otomatis di perangkat ini';
   }
 
   /* ================= Toast ================= */
   function toast(msg, act) {
     var box = $('toasts'), t = document.createElement('div');
     t.className = 'toast';
-    t.innerHTML = '<span>' + esc(msg) + '</span>' + (act ? '<button type="button">' + esc(act.label) + '</button>' : '');
+    t.innerHTML = ic('check', 'toast-ic') + '<span>' + esc(msg) + '</span>' + (act ? '<button type="button">' + esc(act.label) + '</button>' : '');
     if (act) t.querySelector('button').addEventListener('click', function () { act.fn(); kill(); });
     box.appendChild(t);
     while (box.children.length > 3) box.removeChild(box.firstChild);
@@ -134,6 +142,8 @@
     document.documentElement.setAttribute('data-theme', t);
     $('themeBtn').innerHTML = ic(t === 'dark' ? 'sun' : 'moon');
     $('themeBtn').title = t === 'dark' ? 'Ganti ke tema terang' : 'Ganti ke tema gelap';
+    var mc = $('themeColor');
+    if (mc) mc.setAttribute('content', t === 'dark' ? '#0B0D12' : '#F5F6F8');
     try { localStorage.setItem(TKEY, t); } catch (e) {}
   }
 
@@ -172,14 +182,17 @@
   function updateFsUI() {
     var b = $('syncBtn'), l = $('syncLabel');
     if (fHandle && fReady) {
-      b.className = 'sync'; l.textContent = fHandle.name;
-      b.title = 'Auto-save aktif ke ' + fHandle.name + ' (klik untuk simpan sekarang)';
+      b.dataset.state = 'ready';
+      l.textContent = fHandle.name;
+      b.title = 'Tersimpan otomatis ke ' + fHandle.name + ' — klik untuk simpan sekarang';
     } else if (fHandle) {
-      b.className = 'sync'; l.textContent = 'Hubungkan ulang ' + fHandle.name;
+      b.dataset.state = 'warn';
+      l.textContent = 'Izinkan akses ' + fHandle.name;
       b.title = 'Klik untuk mengaktifkan kembali izin tulis ke ' + fHandle.name;
     } else {
-      b.className = 'sync'; l.textContent = 'Tautkan file JSON';
-      b.title = 'Tautkan file JSON agar tersimpan otomatis';
+      b.dataset.state = 'local';
+      l.textContent = 'Di perangkat ini';
+      b.title = 'Data hanya tersimpan di browser. Klik untuk menautkan file JSON.';
     }
     $('mUnlink').disabled = !fHandle;
   }
@@ -310,7 +323,7 @@
     if (!res.length) { toast('Tidak ada limit yang terbaca dari teks'); return; }
     res.forEach(function (n) { upsert(a, n); });
     a.updatedAt = Date.now();
-    ui.paste = null;
+    ui.paste = null; ui.pasteText = '';
     save(); render();
     toast(a.email + ': ' + res.length + ' limit diperbarui');
   }
@@ -353,8 +366,12 @@
       });
     });
     box.innerHTML =
-      '<div class="stat lv-' + lvl(av) + '"><div class="stat-k">' + ic('percent') + 'Rata-rata sisa</div><div class="stat-v num">' + (av >= 0 ? Math.round(av) + '%' : '—') + '</div><div class="stat-s">dari ' + withData.length + ' akun berdata</div></div>' +
-      '<div class="stat"><div class="stat-k">' + ic('clock') + 'Reset terdekat</div><div class="stat-v">' + (nx ? esc(dur(nx.t - Date.now())) : '—') + '</div><div class="stat-s">' + (nx ? esc(nx.e) + ' · ' + esc(shortLabel(nx.l)) : 'belum ada jadwal reset') + '</div></div>' +
+      '<div class="stat lv-' + lvl(av) + '"><div class="stat-k">' + ic('percent') + 'Rata-rata sisa</div>' +
+        '<div class="stat-v num' + (av >= 0 ? '' : ' sm') + '">' + (av >= 0 ? Math.round(av) + '%' : 'Belum ada') + '</div>' +
+        '<div class="stat-s">dari ' + withData.length + ' akun berdata</div></div>' +
+      '<div class="stat"><div class="stat-k">' + ic('clock') + 'Reset terdekat</div>' +
+        '<div class="stat-v' + (nx ? '' : ' sm') + '">' + (nx ? esc(dur(nx.t - Date.now())) : 'Belum ada') + '</div>' +
+        '<div class="stat-s">' + (nx ? esc(nx.e) + ' · ' + esc(shortLabel(nx.l)) : 'belum ada jadwal reset') + '</div></div>' +
       '<div class="stat ' + (low ? 'lv-bad' : 'lv-ok') + '"><div class="stat-k">' + ic('alert') + 'Hampir habis</div><div class="stat-v num">' + low + '</div><div class="stat-s">akun sisa &lt; 10%</div></div>';
   }
 
@@ -424,7 +441,7 @@
         '<button class="btn sm primary" type="submit">' + ic('check') + 'Simpan</button><button class="btn sm" type="button" data-act="rename-cancel">Batal</button></form>';
     }
     if (ui.paste === a.id) {
-      h += '<div class="panel"><textarea data-paste placeholder="Tempel teks limit di sini, akan terbaca otomatis"></textarea>' +
+      h += '<div class="panel"><textarea data-paste placeholder="Tempel teks limit di sini, akan terbaca otomatis">' + esc(ui.pasteText || '') + '</textarea>' +
         '<div class="panel-foot"><span class="hint">Data limit yang sama akan ditimpa, yang lain dipertahankan.</span>' +
         '<button class="btn sm" type="button" data-act="paste-toggle">Tutup</button><button class="btn sm primary" type="button" data-act="paste-run">Proses</button></div></div>';
     }
@@ -446,21 +463,24 @@
     var av = avg(a), lv = lvl(av), c = 2 * Math.PI * 17;
     var chips = a.limits.map(function (l) {
       var p = eff(l);
-      return '<span class="chip lv-' + lvl(p) + '"><i></i>' + esc(shortLabel(l.label)) + ' <b class="num">' + Math.round(p) + '%</b></span>';
+      return '<span class="chip lv-' + lvl(p) + '"><i></i><span>' + esc(shortLabel(l.label)) + '</span><b class="num">' + Math.round(p) + '%</b></span>';
     }).join('');
     var enter = ui.fresh || ui.newIds[a.id];
+    var metaTxt = a.limits.length
+      ? a.limits.length + ' limit' + (a.updatedAt ? ' · diperbarui ' + ago(a.updatedAt) : '')
+      : 'Belum ada limit';
     return '<li class="card' + (a.open ? ' open' : '') + (S.sel === a.id ? ' sel' : '') + (enter ? ' enter' : '') + '" data-id="' + a.id + '" style="--i:' + idx + ';--h:' + hue(a.email) + '">' +
-      '<button class="head-btn" type="button" data-act="toggle" aria-expanded="' + !!a.open + '">' +
-      '<span class="chev">' + ic('chev') + '</span>' +
+      '<button class="head-btn" type="button" data-act="toggle" aria-expanded="' + !!a.open + '" aria-controls="body-' + esc(a.id) + '">' +
       '<span class="avatar" aria-hidden="true">' + esc(a.email.charAt(0)) + '</span>' +
       '<span class="who"><span class="name"><span class="name-t">' + esc(a.email) + '</span><span class="target" title="Target tempel (Ctrl+V)" aria-label="Target tempel">' + ic('clipboard') + '</span></span>' +
-      '<span class="meta">' + a.limits.length + ' limit · diperbarui ' + ago(a.updatedAt) + '</span></span>' +
-      '<span class="score lv-' + lv + '"><svg viewBox="0 0 42 42"><circle class="trk" cx="21" cy="21" r="17" fill="none" stroke-width="4"/>' +
-      (av > 0 ? '<circle class="val" cx="21" cy="21" r="17" fill="none" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (c * av / 100) + ' ' + c + '"/>' : '') + '</svg>' +
+      '<span class="meta">' + esc(metaTxt) + '</span></span>' +
+      '<span class="score lv-' + lv + '" role="img" aria-label="' + (av >= 0 ? 'Rata-rata sisa ' + Math.round(av) + ' persen' : 'Belum ada data limit') + '"><svg viewBox="0 0 42 42" aria-hidden="true"><circle class="trk" cx="21" cy="21" r="17" fill="none" stroke-width="3.4"/>' +
+      (av > 0 ? '<circle class="val" cx="21" cy="21" r="17" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="' + (c * av / 100) + ' ' + c + '"/>' : '') + '</svg>' +
       '<b class="num">' + (av >= 0 ? Math.round(av) : '—') + '</b></span>' +
+      '<span class="chev" aria-hidden="true">' + ic('chev') + '</span>' +
       '</button>' +
       (a.limits.length ? '<div class="collapse chips-wrap"><div class="clip"><div class="chips">' + chips + '</div></div></div>' : '') +
-      '<div class="collapse body-wrap"><div class="clip"><div class="body">' + bodyHTML(a) + '</div></div></div>' +
+      '<div class="collapse body-wrap" id="body-' + esc(a.id) + '"><div class="clip"><div class="body">' + bodyHTML(a) + '</div></div></div>' +
       '</li>';
   }
 
@@ -471,11 +491,19 @@
     var A = visibleAccounts(), list = $('list');
     if (!A.length) {
       list.innerHTML = S.accounts.length
-        ? '<li class="empty">' + ic('search') + '<h3>Tidak ditemukan</h3><p>Tidak ada akun yang cocok dengan “' + esc(ui.q) + '”.</p></li>'
-        : '<li class="empty">' + ic('users') + '<h3>Belum ada akun</h3><p>Tambahkan akun lewat kolom di atas, atau buka file JSON dari menu ⋮.</p></li>';
+        ? '<li class="empty"><div class="empty-ico">' + ic('search') + '</div><h3>Tidak ada hasil</h3>' +
+          '<p>Tidak ada akun yang cocok dengan “' + esc(ui.q) + '”. Coba kata kunci lain.</p>' +
+          '<div class="empty-acts"><button class="btn" type="button" data-empty="clear">' + ic('x') + 'Bersihkan pencarian</button></div></li>'
+        : '<li class="empty"><div class="empty-ico">' + ic('users') + '</div><h3>Belum ada akun</h3>' +
+          '<p>Tambahkan akun lewat kolom di atas, atau buka file JSON yang sudah ada.</p>' +
+          '<div class="empty-acts"><button class="btn primary" type="button" data-empty="add">' + ic('plus') + 'Tambah akun</button>' +
+          '<button class="btn" type="button" data-empty="json">' + ic('folder') + 'Buka file JSON</button></div></li>';
     } else {
       list.innerHTML = A.map(cardHTML).join('');
     }
+    var st = $('listStatus');
+    if (st) st.textContent = A.length + ' akun ditampilkan' + (ui.q.trim() ? ' dari ' + S.accounts.length : '');
+    updateSaved();
     ui.fresh = false; ui.newIds = {};
   }
 
@@ -579,6 +607,7 @@
     if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
     m.style.left = left + 'px';
     m.style.top = top + 'px';
+    focusFirst(m);
   }
   $('ctxMenu').addEventListener('click', function (e) {
     var b = e.target.closest('[data-c]');
@@ -602,6 +631,14 @@
   /* ================= Event: daftar ================= */
   var list = $('list');
   list.addEventListener('click', function (e) {
+    var empty = e.target.closest('[data-empty]');
+    if (empty) {
+      var em = empty.getAttribute('data-empty');
+      if (em === 'add') { $('email').focus(); }
+      else if (em === 'json') { fsOpen(); }
+      else if (em === 'clear') { clearSearch(); }
+      return;
+    }
     var card = e.target.closest('.card');
     if (!card) return;
     var id = card.getAttribute('data-id'), t = e.target.closest('[data-act]'), act = t && t.getAttribute('data-act');
@@ -615,7 +652,9 @@
       case 'menu-lim': e.stopPropagation(); openCtx(t, 'lim', id, +i); return;
       case 'toggle': toggle(id); return;
       case 'del': deleteAccount(id); return;
-      case 'paste-toggle': ui.paste = ui.paste === id ? null : id; S.sel = id; render(); if (ui.paste) { var ta = card.parentNode.querySelector('.card[data-id="' + id + '"] textarea'); ta && ta.focus(); } return;
+      case 'paste-toggle': ui.paste = ui.paste === id ? null : id; ui.pasteText = ''; S.sel = id; render();
+        if (ui.paste) { var ta = document.querySelector('.card[data-id="' + id + '"] textarea[data-paste]'); if (ta) ta.focus(); }
+        return;
       case 'paste-run': var tx = card.querySelector('textarea[data-paste]'); if (tx) applyPaste(id, tx.value); return;
       case 'rename-open': ui.rename = id; render(); var inp = document.querySelector('.card[data-id="' + id + '"] [data-form="rename"] input'); if (inp) { inp.focus(); inp.select(); } return;
       case 'rename-cancel': ui.rename = null; render(); return;
@@ -658,6 +697,10 @@
     else if (e.target.name === 'pct') f.elements.range.value = e.target.value || 0;
   });
 
+  list.addEventListener('input', function (e) {
+    if (e.target.matches && e.target.matches('textarea[data-paste]')) ui.pasteText = e.target.value;
+  });
+
   list.addEventListener('paste', function (e) {
     var ta = e.target;
     if (!ta.matches || !ta.matches('textarea[data-paste]')) return;
@@ -677,15 +720,29 @@
   });
 
   document.addEventListener('keydown', function (e) {
+    var openPop = document.querySelector('.pop:not([hidden])');
+    if (openPop && /^(ArrowDown|ArrowUp|Home|End)$/.test(e.key)) {
+      var items = popItems(openPop);
+      if (items.length) {
+        e.preventDefault();
+        var at = items.indexOf(document.activeElement);
+        if (e.key === 'Home') items[0].focus();
+        else if (e.key === 'End') items[items.length - 1].focus();
+        else if (e.key === 'ArrowDown') items[(at + 1 + items.length) % items.length].focus();
+        else items[(at - 1 + items.length) % items.length].focus();
+      }
+      return;
+    }
     var tag = document.activeElement.tagName, inInput = /INPUT|TEXTAREA|SELECT/.test(tag);
     if (e.key === 'Escape') {
       closePops();
-      if (document.activeElement === $('q')) { ui.q = ''; $('q').value = ''; $('search').classList.remove('open'); render(); $('q').blur(); }
+      if (document.activeElement === $('q')) { clearSearch(); setSearchOpen(false); $('q').blur(); }
       return;
     }
     if (inInput || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === '/') { e.preventDefault(); $('email').focus(); return; }
     if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !$('jsonDlg').open) {
+      if (document.querySelector('.pop:not([hidden])')) return;
       var A = visibleAccounts();
       if (!A.length) return;
       e.preventDefault();
@@ -698,13 +755,25 @@
   });
 
   /* Popover */
+  function popItems(pop) {
+    return Array.prototype.filter.call(pop.querySelectorAll('button:not(:disabled)'), function (b) { return !b.hidden; });
+  }
+  function focusFirst(pop) {
+    var items = popItems(pop);
+    if (items.length) items[0].focus({ preventScroll: true });
+  }
   function closePops(except) {
     if (ctx && ctx.btn) ctx.btn.setAttribute('aria-expanded', 'false');
     document.querySelectorAll('.pop').forEach(function (p) {
       if (p === except || p.hidden) return;
+      var hadFocus = p.contains(document.activeElement);
       p.hidden = true;
       var b = document.querySelector('[data-pop="' + p.id + '"]');
       if (b) b.setAttribute('aria-expanded', 'false');
+      if (hadFocus) {
+        var back = b || (ctx && ctx.btn);
+        if (back && back.focus) back.focus({ preventScroll: true });
+      }
     });
   }
   document.addEventListener('click', function (e) {
@@ -714,6 +783,7 @@
       closePops(willOpen ? p : null);
       p.hidden = !willOpen;
       b.setAttribute('aria-expanded', String(willOpen));
+      if (willOpen) focusFirst(p);
       return;
     }
     if (e.target.closest('.pop')) { if (e.target.closest('button')) setTimeout(function () { closePops(); }, 0); return; }
@@ -725,7 +795,11 @@
     var b = e.target.closest('[data-m]');
     if (!b) return;
     var m = b.getAttribute('data-m');
-    if (m === 'link') fsLink();
+    if (m === 'save') {
+      if (fHandle && fReady) writeDisk().then(function () { toast('Tersimpan ke ' + fHandle.name); });
+      else { save(); toast('Tersimpan di perangkat ini'); }
+    }
+    else if (m === 'link') fsLink();
     else if (m === 'open') fsOpen();
     else if (m === 'unlink') fsUnlink();
     else if (m === 'download') { downloadJson(); toast('limit-tracker.json diunduh'); }
@@ -746,14 +820,24 @@
   $('themeBtn').addEventListener('click', function () {
     applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   });
-  $('searchBtn').addEventListener('click', function () {
-    var s = $('search'), open = !s.classList.contains('open');
-    s.classList.toggle('open', open);
+  function syncSearchX() { var x = $('searchX'); if (x) x.hidden = !$('q').value; }
+  function setSearchOpen(open) {
+    $('search').classList.toggle('open', open);
+    $('searchBtn').setAttribute('aria-expanded', String(open));
     $('q').tabIndex = open ? 0 : -1;
-    if (open) $('q').focus();
-    else { ui.q = ''; $('q').value = ''; render(); }
+  }
+  function clearSearch(focus) {
+    ui.q = ''; $('q').value = '';
+    syncSearchX(); render();
+    if (focus) $('q').focus();
+  }
+  $('searchBtn').addEventListener('click', function () {
+    var open = !$('search').classList.contains('open');
+    setSearchOpen(open);
+    if (open) $('q').focus(); else clearSearch();
   });
-  $('q').addEventListener('input', function (e) { ui.q = e.target.value; render(); });
+  $('q').addEventListener('input', function (e) { ui.q = e.target.value; syncSearchX(); render(); });
+  $('searchX').addEventListener('click', function () { clearSearch(true); });
 
   /* Tambah akun */
   $('addForm').addEventListener('submit', function (e) {
@@ -797,7 +881,21 @@
   hydrate();
   applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
   load();
+  ui.lastSaved = Date.now();
+  ui.pasteText = '';
   render();
   updateFsUI();
+  syncSearchX();
+  var wide = window.matchMedia('(min-width: 721px)');
+  function syncSearchMode() { $('q').tabIndex = (wide.matches || $('search').classList.contains('open')) ? 0 : -1; }
+  function syncPlaceholder() {
+    $('email').placeholder = wide.matches
+      ? 'Tambah akun — pisahkan dengan spasi atau koma'
+      : 'Tambah akun';
+  }
+  syncSearchMode(); syncPlaceholder();
+  if (wide.addEventListener) wide.addEventListener('change', function () {
+    setSearchOpen(false); syncSearchMode(); syncPlaceholder();
+  });
   initFs();
 })();
