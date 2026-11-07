@@ -1,0 +1,139 @@
+{
+  "accounts": [
+    {
+      "id": "mw238r4bym5",
+      "email": "Resetemailzaeni",
+      "open": false,
+      "limits": [
+        {
+          "section": "Claude and GPT models",
+          "label": "Weekly Limit Remaining",
+          "pct": 51,
+          "resetAt": 1794293160000
+        },
+        {
+          "section": "Gemini 4 Argon",
+          "label": "Gemini 4 Argon Weekly Limit",
+          "pct": 7,
+          "resetAt": 1794221160000
+        }
+      ],
+      "updatedAt": 1793797265383
+    },
+    {
+      "id": "mw238uwku9w",
+      "email": "Phixwrap",
+      "open": false,
+      "limits": [
+        {
+          "section": "Claude and GPT models",
+          "label": "Weekly Limit Remaining",
+          "pct": 62,
+          "resetAt": 1794398826988
+        },
+        {
+          "section": "Claude and GPT models",
+          "label": "Five Hour Limit Remaining",
+          "pct": 24,
+          "resetAt": 1793813406988
+        },
+        {
+          "section": "Gemini 4 Argon",
+          "label": "Gemini 4 Argon Weekly Limit",
+          "pct": 1,
+          "resetAt": 1794334026988
+        }
+      ],
+      "updatedAt": 1793797626989
+    },
+    {
+      "id": "mw2390tblao",
+      "email": "Flobytetechnologies",
+      "open": true,
+      "limits": [
+        {
+          "section": "Claude and GPT models",
+          "label": "Weekly Limit Remaining",
+          "pct": 34,
+          "resetAt": 1794190029778
+        },
+        {
+          "section": "Claude and GPT models",
+          "label": "Five Hour Limit Remaining",
+          "pct": 40,
+          "resetAt": 1793817729778
+        },
+        {
+          "section": "Gemini 4 Argon",
+          "label": "Gemini 4 Argon Weekly Limit",
+          "pct": 4,
+          "resetAt": 1794190029778
+        }
+      ],
+      "updatedAt": 1793801229779
+    },
+    {
+      "id": "mw24i74zjj3",
+      "email": "Konglocorcist",
+      "open": false,
+      "limits": [
+        {
+          "section": "Claude and GPT models",
+          "label": "Weekly Limit Remaining",
+          "pct": 0,
+          "resetAt": 1794069960000
+        },
+        {
+          "section": "Gemini 4 Argon",
+          "label": "Gemini 4 Argon Weekly Limit",
+          "pct": 0,
+          "resetAt": 1794073560000
+        }
+      ],
+      "updatedAt": 1793797265383
+    },
+    {
+      "id": "mw24ih94aj3",
+      "email": "Lightningspeed",
+      "open": false,
+      "limits": [
+        {
+          "section": "Claude and GPT models",
+          "label": "Weekly Limit Remaining",
+          "pct": 100,
+          "resetAt": null
+        },
+        {
+          "section": "Gemini 4 Argon",
+          "label": "Gemini 4 Argon Weekly Limit",
+          "pct": 9,
+          "resetAt": 1794228360000
+        }
+      ],
+      "updatedAt": 1793797265383
+    },
+    {
+      "id": "mw24itdbr5b",
+      "email": "Whistlyprojects",
+      "open": false,
+      "limits": [
+        {
+          "section": "Claude and GPT models",
+          "label": "Weekly Limit Remaining",
+          "pct": 100,
+          "resetAt": null
+        },
+        {
+          "section": "Gemini 4 Argon",
+          "label": "Gemini 4 Argon Weekly Limit",
+          "pct": 50,
+          "resetAt": 1794141960000
+        }
+      ],
+      "updatedAt": 1793797265383
+    }
+  ],
+  "sort": "avg",
+  "sel": "mw2390tblao",
+  "all": false
+}
