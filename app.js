@@ -381,19 +381,65 @@
     b.disabled = !S.accounts.length;
   }
 
-  function limitRow(a, l, i) {
-    if (ui.edit && ui.edit.id === a.id && ui.edit.i === i) return limitForm(a, l, i);
-    var p = eff(l), sub;
-    if (l.resetAt && l.resetAt > Date.now()) sub = 'Reset dalam ' + dur(l.resetAt - Date.now()) + ' · ' + when(l.resetAt);
-    else if (l.resetAt) sub = 'Waktu reset sudah lewat, dihitung 100%';
-    else sub = l.pct < 100 ? 'Waktu reset belum diisi' : 'Penuh';
-    return '<li class="limit lv-' + lvl(p) + '" style="--w:' + p + '%">' +
-      '<div class="limit-top"><div class="limit-info"><div class="limit-label">' + esc(l.label) + '</div>' +
-      '<div class="limit-sub">' + ic('clock') + '<span>' + esc(sub) + '</span></div></div>' +
-      '<span class="limit-pct num">' + Math.round(p) + '%</span>' +
-      '<div class="limit-acts">' +
-      '<button class="icon-btn sm" type="button" data-act="menu-lim" data-i="' + i + '" aria-haspopup="menu" aria-label="Aksi limit" title="Aksi limit">' + ic('more') + '</button>' +
-      '</div></div><div class="bar"><i></i></div></li>';
+  /* Satu kategori = satu baris.
+     Kalau kategorinya punya lebih dari satu limit (mis. Weekly + Five Hour),
+     semuanya digambar sebagai cincin konsentris di dalam satu donut: satu
+     cincin per limit, urut dari luar ke dalam. Kalau limitnya cuma satu, tidak
+     ada yang digabung — donut satu cincin, keterangannya ditaruh di ujung baris.
+     Tidak ada angka persen di sini: panjang busur sudah menyatakan sisanya,
+     sisanya diwakili kata (Aman / Waspada / Kritis) + waktu reset. */
+  function donutHTML(items) {
+    var radii = [17, 11.5, 6], out = '<svg viewBox="0 0 42 42" aria-hidden="true">';
+    for (var k = 0; k < items.length && k < radii.length; k++) {
+      var p = eff(items[k].l), r = radii[k], c = 2 * Math.PI * r;
+      out += '<circle class="dt" cx="21" cy="21" r="' + r + '"/>';
+      if (p > 0) out += '<circle class="dv lv-' + lvl(p) + '" cx="21" cy="21" r="' + r +
+        '" stroke-dasharray="' + (c * p / 100).toFixed(2) + ' ' + c.toFixed(2) + '"/>';
+    }
+    return out + '</svg>';
+  }
+
+  function stateWord(p) { return p >= 50 ? 'Aman' : p >= 10 ? 'Waspada' : 'Kritis'; }
+
+  function resetWords(l) {
+    if (l.resetAt && l.resetAt > Date.now()) return 'reset dalam ' + dur(l.resetAt - Date.now());
+    if (l.resetAt) return 'reset sudah lewat';
+    return l.pct < 100 ? 'reset belum diisi' : 'penuh';
+  }
+
+  function catRow(a, sec, items) {
+    for (var k = 0; k < items.length; k++) {
+      if (ui.edit && ui.edit.id === a.id && ui.edit.i === items[k].i) return limitForm(a, items[k].l, items[k].i);
+    }
+    var kebab = function (idx) {
+      return '<button class="icon-btn sm" type="button" data-act="menu-lim" data-i="' + idx +
+        '" aria-haspopup="menu" aria-label="Aksi limit" title="Aksi limit">' + ic('more') + '</button>';
+    };
+    var strip = function (l) {
+      var t = shortLabel(l.label);
+      if (sec && sec !== 'Umum') {
+        var re = new RegExp('^' + sec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*', 'i');
+        t = t.replace(re, '') || t;
+      }
+      return t;
+    };
+    var h = '<li class="cat"><span class="cat-donut">' + donutHTML(items) + '</span><div class="cat-main">';
+    if (items.length === 1) {
+      var l = items[0].l, p = eff(l), titled = sec && sec !== 'Umum';
+      h += '<div class="cat-line"><span class="cat-name">' + esc(titled ? sec : shortLabel(l.label)) + '</span>' +
+        '<span class="cat-w"><span class="st lv-' + lvl(p) + '">' + stateWord(p) + '</span> · ' +
+        (titled ? esc(strip(l)) + ' · ' : '') + esc(resetWords(l)) + '</span>' + kebab(items[0].i) + '</div>';
+    } else {
+      h += '<div class="cat-head"><span class="cat-name">' + esc(sec || 'Umum') + '</span></div>';
+      items.forEach(function (it) {
+        var q = eff(it.l);
+        h += '<div class="cat-line"><span class="cat-key lv-' + lvl(q) + '"></span>' +
+          '<span class="cat-t">' + esc(strip(it.l)) + '</span>' +
+          '<span class="cat-w"><span class="st lv-' + lvl(q) + '">' + stateWord(q) + '</span> · ' + esc(resetWords(it.l)) + '</span>' +
+          kebab(it.i) + '</div>';
+      });
+    }
+    return h + '</div></li>';
   }
 
   function limitForm(a, l, i) {
@@ -432,13 +478,13 @@
     var groups = [], gi = {}, newForm = ui.edit && ui.edit.id === a.id && ui.edit.i === 'new';
     a.limits.forEach(function (l, i) {
       if (gi[l.section] == null) { gi[l.section] = groups.length; groups.push({ n: l.section, r: [] }); }
-      groups[gi[l.section]].r.push(limitRow(a, l, i));
+      groups[gi[l.section]].r.push({ l: l, i: i });
     });
     if (newForm) h += '<div class="sect">Limit baru</div><ul class="limits">' + limitForm(a, null, 'new') + '</ul>';
     if (!a.limits.length && !newForm) {
       h += '<div class="empty-acc">Belum ada limit. Tempel teks atau tambah manual.</div>';
     }
-    groups.forEach(function (g) { h += '<div class="sect">' + esc(g.n) + '</div><ul class="limits">' + g.r.join('') + '</ul>'; });
+    groups.forEach(function (g) { h += '<ul class="limits">' + catRow(a, g.n, g.r) + '</ul>'; });
     return h;
   }
 
@@ -446,7 +492,7 @@
     var av = avg(a), lv = lvl(av), c = 2 * Math.PI * 17;
     var chips = a.limits.map(function (l) {
       var p = eff(l);
-      return '<span class="chip lv-' + lvl(p) + '"><i></i>' + esc(shortLabel(l.label)) + ' <b class="num">' + Math.round(p) + '%</b></span>';
+      return '<span class="chip lv-' + lvl(p) + '">' + esc(shortLabel(l.label)) + '</span>';
     }).join('');
     var enter = ui.fresh || ui.newIds[a.id];
     return '<li class="card' + (a.open ? ' open' : '') + (S.sel === a.id ? ' sel' : '') + (enter ? ' enter' : '') + '" data-id="' + a.id + '" style="--i:' + idx + ';--h:' + hue(a.email) + '">' +

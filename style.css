@@ -402,9 +402,8 @@ main { padding-bottom: 56px; }
 .chips > .chip:first-child { padding-left: 0; }
 .chip + .chip { border-left: 1px solid var(--bd); }
 .chip i { display: none; }
-.chip b { color: var(--tx); font-weight: 700; font-size: var(--fs-2); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.chip.lv-warn b { color: var(--warn); }
-.chip.lv-bad b { color: var(--bad); }
+.chip.lv-warn { color: var(--warn); }
+.chip.lv-bad { color: var(--bad); }
 
 /* Body */
 .body { padding: 4px 14px 16px; border-top: 1px solid var(--bd2); }
@@ -428,6 +427,33 @@ main { padding-bottom: 56px; }
 
 .sect { margin: 14px 0 6px; font-size: var(--fs-1); font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--mut); }
 .limits { list-style: none; margin: 0; padding: 0; border: 1px solid var(--bd2); border-radius: 12px; overflow: hidden; background: var(--bg); }
+/* Satu kategori = satu baris + satu donut. Cincin di dalam donut: satu per
+   limit, urut luar -> dalam. Warna cuma dipakai kalau perlu ditengok
+   (Aman = netral). Tidak ada persen: busur + kata yang menyatakan sisanya. */
+.cat { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-top: 1px solid var(--bd2); }
+.limits > .cat:first-child { border-top: 0; }
+.cat-donut { width: 46px; height: 46px; flex: none; }
+.cat-donut svg { width: 46px; height: 46px; display: block; transform: rotate(-90deg); }
+.cat-donut .dt { fill: none; stroke: var(--track); stroke-width: 4.4; }
+.cat-donut .dv { fill: none; stroke-width: 4.4; stroke-linecap: round; transition: stroke-dasharray .6s cubic-bezier(.2,.8,.2,1); }
+.cat-donut .dv.lv-ok { stroke: var(--bd-strong); }
+.cat-donut .dv.lv-warn { stroke: var(--warn); }
+.cat-donut .dv.lv-bad { stroke: var(--bad); }
+.cat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cat-head, .cat-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cat-name { font-size: var(--fs-3); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-line { font-size: var(--fs-2); color: var(--mut); }
+.cat-line .cat-name { font-size: var(--fs-3); }
+.cat-t { font-weight: 600; color: var(--tx); flex: none; }
+.cat-key { width: 12px; height: 3px; border-radius: 2px; flex: none; background: var(--bd-strong); }
+.cat-key.lv-warn { background: var(--warn); }
+.cat-key.lv-bad { background: var(--bad); }
+.cat-w { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cat-line .icon-btn.sm { width: 26px; height: 26px; margin-left: auto; flex: none; }
+.st { font-weight: 600; }
+.st.lv-ok { color: var(--mut); }
+.st.lv-warn { color: var(--warn); }
+.st.lv-bad { color: var(--bad); }
 .limit { padding: 11px 12px; border-top: 1px solid var(--bd2); }
 .limit:first-child { border-top: 0; }
 .limit-top { display: flex; align-items: center; gap: 8px; }
