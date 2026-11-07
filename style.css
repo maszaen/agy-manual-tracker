@@ -51,7 +51,7 @@
   --ac-solid-hover: #A8360A;
   --on-ac: #FFFFFF;
   --ac-bg: rgba(255, 158, 74, .12);
-  --sel: var(--ac);     /* fokus & akun terpilih = biru interaksi */
+  --sel: var(--ac);     /* fokus keyboard saja; kartu terpilih sengaja tanpa sorotan */
   /* Status dibuat lebih terang & sedikit di-desaturasi di mode gelap:
      warna "500" penuh terasa bergetar di atas latar gelap. */
   --ok: #3CCB8A;
@@ -317,7 +317,6 @@ main { padding-bottom: 56px; }
 }
 .card.enter { animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
 .card:hover { border-color: var(--bd-strong); }
-.card.sel { border-color: var(--sel); box-shadow: 0 0 0 3px var(--ac-bg); }
 
 .head-btn {
   width: 100%;
@@ -356,7 +355,7 @@ main { padding-bottom: 56px; }
   opacity: 0; transition: opacity .2s;
 }
 .target .ic { width: 14px; height: 14px; }
-.card.sel .target { opacity: 1; color: var(--ac); }
+.card.sel .target { opacity: 1; color: var(--mut); }
 .meta { margin-top: 1px; font-size: var(--fs-2); color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
 /* Satu-satunya pembawa warna di kartu, dan hanya saat perlu ditengok:
