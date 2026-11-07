@@ -385,17 +385,24 @@ main { padding-bottom: 56px; }
 .open .body-wrap { grid-template-rows: 1fr; }
 .open .body-wrap > .clip { visibility: visible; transition-delay: 0s; }
 
-.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 13px 64px; }
+/* Chip = teks data, bukan kapsul.
+   Sebelumnya tiap chip itu kotak 22px dengan border + latar + titik 6px +
+   angka: 4 lapisan visual untuk satu label pendek. Di layar 6 akun itu
+   11 kapsul + 11 titik + 11 border tambahan, semuanya berulang.
+   Sekarang: label redup + angka tebal, dipisah garis rambut 1px.
+   Titiknya dibuang karena warnanya sama dengan angka di sebelahnya (tidak
+   menambah info) dan angkanya sudah terbaca tanpa bantuan warna. */
+.chips { display: flex; flex-wrap: wrap; align-items: baseline; padding: 3px 14px 12px 64px; }
 .chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  height: 22px; padding: 0 8px; border-radius: 999px;
-  background: var(--surface2); border: 1px solid var(--bd2);
+  display: inline-flex; align-items: baseline; gap: 5px;
+  padding: 0 12px; background: none; border: 0;
   font-size: var(--fs-1); color: var(--mut);
   white-space: nowrap;
 }
-.chip i { display: none; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+.chips > .chip:first-child { padding-left: 0; }
+.chip + .chip { border-left: 1px solid var(--bd); }
+.chip i { display: none; }
 .chip b { color: var(--tx); font-weight: 700; font-size: var(--fs-2); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.chip.lv-warn i, .chip.lv-bad i { display: block; }
 .chip.lv-warn b { color: var(--warn); }
 .chip.lv-bad b { color: var(--bad); }
 
