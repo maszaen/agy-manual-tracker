@@ -3,11 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Limit Tracker — Pantau sisa limit akun</title>
-<meta name="description" content="Pantau sisa limit beberapa akun dalam satu tempat. Data tersimpan lokal di perangkat, tanpa server.">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0B0D12" id="themeColor">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233366E6'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M16 18.5 20.5 12'/%3E%3Cpath d='M8.6 24a8.6 8.6 0 1 1 14.8 0'/%3E%3C/g%3E%3C/svg%3E">
+<title>Limit Tracker</title>
 <script>
   /* Terapkan tema sebelum render agar tidak berkedip */
   (function () {
@@ -15,8 +11,6 @@
     try { t = localStorage.getItem('limit-tracker-theme'); } catch (e) {}
     if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', t);
-    var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', t === 'light' ? '#F5F6F8' : '#0B0D12');
   })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,24 +20,18 @@
 </head>
 <body>
 
-<a class="skip" href="#main">Lewati ke konten</a>
-
 <header class="topbar">
   <div class="wrap topbar-in">
-    <div class="brand">
-      <span class="logo" aria-hidden="true"><span data-ic="gauge"></span></span>
-      <span class="brand-name">Limit Tracker</span>
-    </div>
+    <div class="brand"><span class="logo" data-ic="gauge"></span><span class="brand-name">Limit Tracker</span></div>
     <div class="topbar-actions">
-      <button class="sync" id="syncBtn" type="button" data-state="local" aria-label="Status penyimpanan">
-        <span data-ic="drive"></span><span class="dot" aria-hidden="true"></span><span id="syncLabel">Di perangkat ini</span>
+      <button class="sync" id="syncBtn" type="button" aria-label="Status penyimpanan file">
+        <span data-ic="drive"></span><span id="syncLabel">Tautkan file JSON</span>
       </button>
       <button class="icon-btn" id="themeBtn" type="button" aria-label="Ganti tema" title="Ganti tema"></button>
       <div class="pop-wrap">
         <button class="icon-btn" type="button" data-pop="dataMenu" aria-haspopup="menu" aria-expanded="false" aria-label="Menu data" title="Menu data"><span data-ic="more"></span></button>
-        <div class="pop" id="dataMenu" role="menu" aria-label="Menu data" hidden>
-          <div class="pop-title">Penyimpanan</div>
-          <button type="button" role="menuitem" data-m="save"><span data-ic="check"></span>Simpan sekarang</button>
+        <div class="pop" id="dataMenu" role="menu" hidden>
+          <div class="pop-title">Penyimpanan file</div>
           <button type="button" role="menuitem" data-m="link"><span data-ic="link"></span>Buat / tautkan file JSON</button>
           <button type="button" role="menuitem" data-m="open"><span data-ic="folder"></span>Buka file JSON</button>
           <button type="button" role="menuitem" data-m="unlink" id="mUnlink"><span data-ic="unlink"></span>Putuskan tautan</button>
@@ -57,69 +45,52 @@
   </div>
 </header>
 
-<main class="wrap" id="main">
-
-  <div class="page-head">
-    <h1>Ringkasan limit</h1>
-    <p class="lede">Pantau sisa limit semua akun dalam satu layar. Data tersimpan di perangkat ini.</p>
-  </div>
-
+<main class="wrap">
   <section class="adder" aria-label="Tambah akun">
     <form id="addForm" autocomplete="off">
-      <div class="field">
-        <span class="field-ic" data-ic="userPlus" aria-hidden="true"></span>
-        <input id="email" type="text" placeholder="Tambah akun — pisahkan dengan spasi atau koma" aria-label="Akun baru" enterkeyhint="done">
-        <span class="field-kbd" aria-hidden="true"><kbd>/</kbd></span>
-        <button class="add-btn" id="addBtn" type="submit" disabled aria-label="Tambah akun" title="Tambah akun (Enter)"><span data-ic="plus"></span><span class="add-t">Tambah</span></button>
-      </div>
+      <label class="field">
+        <span data-ic="userPlus"></span>
+        <input id="email" type="text" placeholder="Tambah akun, bisa banyak sekaligus (pisahkan spasi / koma)" aria-label="Akun baru">
+        <button class="add-btn" id="addBtn" type="submit" disabled aria-label="Tambah akun" title="Tambah akun"><span data-ic="plus"></span></button>
+      </label>
     </form>
   </section>
 
-  <section class="stats" id="stats" aria-label="Ringkasan keseluruhan"></section>
+  <section class="stats" id="stats" aria-label="Ringkasan"></section>
 
   <section aria-labelledby="listTitle">
     <div class="listbar">
       <h2 id="listTitle">Akun <span class="count" id="count">0</span></h2>
       <div class="listbar-tools">
         <div class="search" id="search">
-          <button class="icon-btn search-btn" id="searchBtn" type="button" aria-label="Cari akun" aria-expanded="false" aria-controls="q"><span data-ic="search"></span></button>
-          <div class="search-box">
-            <span class="search-ic" aria-hidden="true" data-ic="search"></span>
-            <input id="q" type="search" placeholder="Cari akun" aria-label="Cari akun" tabindex="-1">
-            <button class="search-x" id="searchX" type="button" aria-label="Bersihkan pencarian" title="Bersihkan" hidden><span data-ic="x"></span></button>
-          </div>
+          <button class="icon-btn" id="searchBtn" type="button" aria-label="Cari akun" title="Cari akun"><span data-ic="search"></span></button>
+          <input id="q" type="search" placeholder="Cari akun…" aria-label="Cari akun" tabindex="-1">
         </div>
         <div class="pop-wrap">
           <button class="icon-btn" id="sortBtn" type="button" data-pop="sortMenu" aria-haspopup="menu" aria-expanded="false" aria-label="Urutkan" title="Urutkan"><span data-ic="sort"></span><span class="badge-dot"></span></button>
-          <div class="pop pop-sort" id="sortMenu" role="menu" aria-label="Urutkan akun" hidden></div>
+          <div class="pop pop-sort" id="sortMenu" role="menu" hidden></div>
         </div>
         <button class="icon-btn" id="expBtn" type="button" aria-label="Buka semua" title="Buka semua"></button>
       </div>
     </div>
-    <p class="sr-only" id="listStatus" aria-live="polite"></p>
     <ul class="list" id="list"></ul>
   </section>
 
-  <footer class="foot">
-    <span class="foot-item"><kbd>↑</kbd><kbd>↓</kbd> pilih akun</span>
-    <span class="foot-item"><kbd>Ctrl</kbd>+<kbd>V</kbd> tempel ke akun terpilih</span>
-    <span class="foot-item"><kbd>/</kbd> tambah akun</span>
-    <span class="foot-saved" id="footSaved"></span>
-  </footer>
-
+  <p class="foot">
+    <span><kbd>↑</kbd><kbd>↓</kbd> pilih akun</span>
+    <span><kbd>Ctrl</kbd>+<kbd>V</kbd> tempel ke akun terpilih</span>
+    <span><kbd>/</kbd> tambah akun</span>
+  </p>
 </main>
 
-<dialog id="jsonDlg" aria-labelledby="jsonTitle" aria-describedby="jsonDesc">
+<dialog id="jsonDlg" aria-labelledby="jsonTitle">
   <form method="dialog" class="dlg-head">
-    <div>
-      <h3 id="jsonTitle">Data JSON</h3>
-      <p id="jsonDesc">Salin sebagai cadangan, atau tempel JSON lalu muat untuk mengganti seluruh data.</p>
-    </div>
+    <h3 id="jsonTitle">Data JSON</h3>
     <button class="icon-btn" aria-label="Tutup"><span data-ic="x"></span></button>
   </form>
   <textarea id="jsonTxt" spellcheck="false" aria-label="Isi JSON"></textarea>
   <div class="dlg-foot">
-    <span class="muted" id="jsonMsg" role="status"></span>
+    <span class="muted" id="jsonMsg"></span>
     <button class="btn" id="jsonCopy" type="button"><span data-ic="copy"></span>Salin</button>
     <button class="btn primary" id="jsonLoad" type="button"><span data-ic="check"></span>Muat data</button>
   </div>
